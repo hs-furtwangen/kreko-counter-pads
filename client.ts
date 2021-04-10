@@ -1,48 +1,120 @@
-namespace helloWebSockets { // name space to isolate identifiers from other examples
-  const socket: WebSocket = new WebSocket("ws://localhost:8000/");
+// const socket: WebSocket = new WebSocket("ws://localhost:8000/");
+const socket: WebSocket = new WebSocket("wss://counter-pads.herokuapp.com/");
 
-  const counterNames: string[] = [
-    "numClients",
-    "topLeft",
-    "topCenter",
-    "topRight",
-    "middleLeft",
-    "middleRight",
-    "bottomLeft",
-    "bottomCenter",
-    "bottomRight",
-  ];
+// carrier message interface
+interface CarrierMessage {
+  selector: string;
+  data?: string;
+}
 
-  for (let counterName of counterNames) {
-    const padDiv: HTMLDivElement = document.querySelector(`#${counterName}`);
+// client text message interface
+interface TextMessage {
+  client: number;
+  text: string;
+}
 
-    if (padDiv.id !== "numClients") {
-      padDiv.addEventListener("touchstart", (evt) => {
-        const div: HTMLDivElement = <HTMLDivElement>evt.target;
-        socket.send(div.dataset.index);
+// client text message interface
+interface InitMessage {
+  id: number;
+  messages: TextMessage[];
+}
 
-        div.classList.add("active");
+// client id retrieved from server
+let id: number = null;
+let messageList: TextMessage[] = null;
 
-        setTimeout(() => div.classList.remove("active"), 100);
+// get div elements of client id, message list and message field
+const idDiv: HTMLDivElement = <HTMLDivElement>document.getElementById("id");
+const messageListDiv: HTMLDivElement = <HTMLInputElement>document.getElementById("message-list");
+const textField: HTMLInputElement = <HTMLInputElement>document.getElementById("text-field");
 
-        evt.preventDefault();
-      });
+// listen to connection open
+// socket.addEventListener("open", (event) => {
+// });
+
+// listen to message from server
+socket.addEventListener("message", (event) => {
+  const carrier: CarrierMessage = <CarrierMessage>JSON.parse(event.data);
+  const selector: string = carrier.selector;
+  const data: string = carrier.data;
+
+  switch (selector) {
+    case "init": {
+      const initMessage: InitMessage = <InitMessage>JSON.parse(data);
+
+      // store id and message list
+      id = initMessage.id;
+      messageList = initMessage.messages;
+
+      // display id and message list
+      idDiv.innerHTML = `#${id}`;
+      displayMessageList();
+      break;
     }
+
+    case "text-message": {
+      const textMessage: TextMessage = <TextMessage>JSON.parse(<string>data);
+      messageList.push(textMessage); // add message to message list
+      displayMessageList();
+      break;
+    }
+
+    case "clear":
+      messageList = []; // clear message list
+      displayMessageList();
+      break;
+  }
+});
+
+// send text message on enter key
+textField.addEventListener("keyup", function (evt: KeyboardEvent): void {
+  if (evt.key === "Enter") {
+    sendText();
+  }
+});
+
+document.body.addEventListener("touchstart", sendText);
+
+function displayMessageList(): void {
+  let htmlStr: string = "<table>";
+
+  // compose list of text paragraphs from message list
+  for (let message of messageList) {
+    const textClass: string = (message.client == id) ? "self" : "others";
+    const idStr: string = (message.client == id) ? "myself" : `#${message.client}`;
+    htmlStr += `<tr class=${textClass}><td class="col-0">${idStr}:</td><td>${message.text}</td></tr>`;
   }
 
-  // listen to connection open
-  // socket.addEventListener("open", (event) => {
-  // });
+  htmlStr += "</table>";
+  // display message list in div in HTML
+  messageListDiv.innerHTML = htmlStr;
 
-  // listen to message from server
-  socket.addEventListener("message", (event) => {
-    const counters: number[] = JSON.parse(event.data);
+  window.scrollTo(0, document.body.scrollHeight);
+}
 
-    for (let i: number = 0; i < counters.length; i++) {
-      const counterName: string = counterNames[i];
-      const counterDiv: HTMLDivElement = document.querySelector(`#${counterName} .counter`);
+function sendText(): void {
+  const text: string = textField.value;
 
-      counterDiv.innerHTML = counters[i].toString();
-    }
-  });
+  if (text === "#clear") {
+    // clear chat
+    const clearCarrier: CarrierMessage = {
+      selector: "clear",
+    };
+
+    socket.send(JSON.stringify(clearCarrier));
+  } else if (text !== "") {
+    const message: TextMessage = {
+      client: id,
+      text: text,
+    };
+
+    const textCarrier: CarrierMessage = {
+      selector: "text-message",
+      data: JSON.stringify(message),
+    };
+
+    socket.send(JSON.stringify(textCarrier));
+  }
+
+  textField.value = ""; // clear message text field
 }

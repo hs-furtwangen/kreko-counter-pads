@@ -1,42 +1,57 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const WebSocket = require("ws");
-// // create WebSocket server with given port
+// define count to give out different client ids
+let clientIdCounter = 0;
+// get port from shell or set default (8000)
 const port = Number(process.env.PORT) || 8000;
+// create WebSocket server
 const server = new WebSocket.Server({ port: port });
-// set of connected sockets
+// list of client messages
+const messageList = [];
+// list of connected sockets
 const clientSockets = new Set();
-var Counters;
-(function (Counters) {
-    Counters[Counters["numClients"] = 0] = "numClients";
-    Counters[Counters["topLeft"] = 1] = "topLeft";
-    Counters[Counters["topCenter"] = 2] = "topCenter";
-    Counters[Counters["topRight"] = 3] = "topRight";
-    Counters[Counters["middleLeft"] = 4] = "middleLeft";
-    Counters[Counters["middleRight"] = 5] = "middleRight";
-    Counters[Counters["bottomLeft"] = 6] = "bottomLeft";
-    Counters[Counters["bottomCenter"] = 7] = "bottomCenter";
-    Counters[Counters["bottomRight"] = 8] = "bottomRight";
-})(Counters || (Counters = {}));
-const counters = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 server.on("connection", (socket) => {
     clientSockets.add(socket);
-    counters[Counters.numClients]++;
-    broadcastCounters();
+    const initMessageObj = {
+        id: ++clientIdCounter,
+        messages: messageList,
+    };
+    const initCarrierMessage = {
+        selector: "init",
+        data: JSON.stringify(initMessageObj),
+    };
+    socket.send(JSON.stringify(initCarrierMessage));
     socket.on("message", (message) => {
-        const counterIndex = parseInt(message);
-        counters[counterIndex]++;
-        broadcastCounters();
+        const carrierMessage = JSON.parse(message);
+        const selector = carrierMessage.selector;
+        const data = carrierMessage.data;
+        switch (selector) {
+            case "text-message": {
+                const textMessage = JSON.parse(data);
+                // add message to message list
+                messageList.push(textMessage);
+                console.log(`#${textMessage.client}: "${textMessage.text}"`);
+                // broadcast message to all connected clients
+                for (let socket of clientSockets) {
+                    socket.send(message);
+                }
+                break;
+            }
+            case "clear": {
+                messageList.length = 0;
+                // send clear message to all connected clients
+                for (let socket of clientSockets) {
+                    socket.send(message);
+                }
+                break;
+            }
+            default:
+                break;
+        }
     });
     socket.on("close", () => {
         clientSockets.delete(socket);
-        counters[Counters.numClients]--;
-        broadcastCounters();
     });
-    function broadcastCounters() {
-        for (let socket of clientSockets) {
-            socket.send(JSON.stringify(counters));
-        }
-    }
 });
 //# sourceMappingURL=server.js.map
