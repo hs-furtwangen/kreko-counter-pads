@@ -1,57 +1,70 @@
 body {
-  margin: 20px;
+  position: fixed;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 10%;
+  margin: 0;
   font-family: Helvetica, sans-serif;
   font-size: 1em;
   line-height: 1.3em;
+  background-color: gray;
 }
 
-h1 {
-  position: sticky;
-  left: 0;
-  top: 0;
-  padding: 0.67em 0;
-  font-size: 1.5em;
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-p {
-  margin-block-start: 0.4em;
-  margin-block-end: 0.4em;
-  margin-inline-start: 0;
-  margin-inline-end: 0;
-}
-
-div {
-  margin: 0.25em 1em;
-}
-
-#text-field {
-  position: sticky;
-  left: 0;
-  bottom: 20px;
-  width: 97%;
-  padding: 5px;
+.pad, .no-pad {
+  position: absolute;
+  box-sizing: border-box;
+  width: 33.333%;
+  height: 33.333%;
   border-style: solid;
-  border-color: #555;
-  border-width: 1px;
-  box-shadow: none;
-  outline: none;
-  font-size: 1em;
+  border-width: 1%;
+  border-color: gray;
+  border-radius: 25px;
+  color: white;
+  text-align: center;
 }
 
-#text-field::placeholder {
-  color: #ccc;
+.counter {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  margin-top: -28px;
+  line-height: 64px;
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none;
 }
 
-td {
-  vertical-align: top;
+.pad {
+  background-color: coral;
 }
 
-td.col-0 {
-  white-space: nowrap;
-  text-align: right;
+.pad.active {
+  background-color: white;
 }
 
-tr.self {
-  color: blue;
+.left {
+  left: 0;
+}
+
+.center {
+  left: 33.333%;
+}
+
+.right {
+  left: 66.666%;
+}
+
+.top {
+  top: 0;
+}
+
+.middle {
+  top: 33.333%;
+}
+
+.bottom {
+  top: 66.666%;
 }
