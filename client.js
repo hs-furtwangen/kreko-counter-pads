@@ -1,6 +1,6 @@
 "use strict";
 // const socket: WebSocket = new WebSocket("ws://localhost:8000/");
-const socket = new WebSocket("wss://counter-pads.herokuapp.com/");
+const socket = new WebSocket("wss://kreko-counter-pads.herokuapp.com/");
 const counterNames = [
     "numClients",
     "topLeft",

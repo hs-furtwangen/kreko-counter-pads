@@ -1,5 +1,5 @@
 // const socket: WebSocket = new WebSocket("ws://localhost:8000/");
-const socket: WebSocket = new WebSocket("wss://counter-pads.herokuapp.com/");
+const socket: WebSocket = new WebSocket("wss://kreko-counter-pads.herokuapp.com/");
 
 const counterNames: string[] = [
   "numClients",
